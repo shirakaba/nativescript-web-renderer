@@ -23,6 +23,17 @@ export class ApplicationDelegate
     appMenu.addItemWithTitleActionKeyEquivalent("Quit", "terminate:", "q");
 
     const controller = NSViewController.new();
+    const hostView = controller.view;
+    const textView = NSTextView.alloc().initWithFrame(NSZeroRect);
+    textView.translatesAutoresizingMaskIntoConstraints = false;
+    hostView.addSubview(textView as unknown as NSView);
+
+    NSLayoutConstraint.activateConstraints([
+      textView.leadingAnchor.constraintEqualToAnchor(hostView.leadingAnchor),
+      textView.trailingAnchor.constraintEqualToAnchor(hostView.trailingAnchor),
+      textView.topAnchor.constraintEqualToAnchor(hostView.topAnchor),
+      textView.bottomAnchor.constraintEqualToAnchor(hostView.bottomAnchor),
+    ]);
     const window = NSWindow.windowWithContentViewController(controller);
 
     window.title = "NativeScript for macOS";
