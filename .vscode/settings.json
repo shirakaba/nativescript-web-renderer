@@ -1,4 +1,3 @@
 {
-  "prettier.enable": true,
-  "typescript.experimental.useTsgo": true
+  "prettier.enable": true
 }
