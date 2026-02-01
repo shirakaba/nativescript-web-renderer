@@ -1,0 +1,19 @@
+{
+  "name": "nativescript-web-renderer",
+  "version": "0.0.1",
+  "type": "module",
+  "module": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "start": "node src/index.ts"
+  },
+  "dependencies": {
+    "@nativescript/macos-node-api": "^0.2.0"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^6.0.2",
+    "@tsconfig/node24": "^24.0.4",
+    "prettier": "^3.8.1",
+    "typescript": "^5.9.3"
+  }
+}
