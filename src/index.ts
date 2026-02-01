@@ -10,22 +10,7 @@ export class ApplicationDelegate
     NativeClass(this);
   }
 
-  running = true;
-  window: Window | null = null;
-
-  applicationWillTerminate(_notification: NSNotification) {
-    this.running = false;
-  }
-}
-
-export class Window extends NSWindow implements NSWindowDelegate {
-  static ObjCProtocols = [NSWindowDelegate];
-
-  static {
-    NativeClass(this);
-  }
-
-  init() {
+  applicationDidFinishLaunching(_notification: NSNotification) {
     const menu = NSMenu.new();
     NSApp.mainMenu = menu;
 
@@ -37,89 +22,24 @@ export class Window extends NSWindow implements NSWindowDelegate {
 
     appMenu.addItemWithTitleActionKeyEquivalent("Quit", "terminate:", "q");
 
-    super.initWithContentRectStyleMaskBackingDefer(
-      { origin: { x: 0, y: 0 }, size: { width: 500, height: 500 } },
+    const controller = NSViewController.new();
+    const window = NSWindow.windowWithContentViewController(controller);
+
+    window.title = "NativeScript for macOS";
+    window.delegate = this;
+    window.styleMask =
       NSWindowStyleMask.Titled |
-        NSWindowStyleMask.Closable |
-        NSWindowStyleMask.Miniaturizable |
-        NSWindowStyleMask.Resizable,
-      2,
-      false,
-    );
+      NSWindowStyleMask.Closable |
+      NSWindowStyleMask.Miniaturizable |
+      NSWindowStyleMask.Resizable |
+      NSWindowStyleMask.FullSizeContentView;
 
-    this.title = "NativeScript for macOS";
-    this.delegate = this;
+    window.titlebarAppearsTransparent = true;
+    window.titleVisibility = NSWindowTitleVisibility.Hidden;
 
-    this.makeKeyAndOrderFront(NSApp);
-    this.releasedWhenClosed = false;
+    window.makeKeyAndOrderFront(this);
 
-    this.center();
-
-    this.backgroundColor = NSColor.colorWithSRGBRedGreenBlueAlpha(
-      118 / 255,
-      171 / 255,
-      235 / 255,
-      1,
-    );
-
-    const label = NSTextField.alloc().initWithFrame({
-      origin: { x: 0, y: 0 },
-      size: { width: 390, height: 100 },
-    });
-
-    label.stringValue = "Hello, macOS";
-
-    label.isBezeled = false;
-    label.drawsBackground = false;
-    label.isEditable = false;
-    label.isSelectable = false;
-    label.alignment = NSTextAlignment.Center;
-    label.translatesAutoresizingMaskIntoConstraints = false;
-    label.textColor = NSColor.colorWithSRGBRedGreenBlueAlpha(1, 1, 1, 1);
-
-    label.font = NSFontManager.sharedFontManager.convertFontToHaveTrait(
-      NSFont.fontWithNameSize(label.font.fontName, 45),
-      NSFontTraitMask.Bold,
-    );
-
-    label.sizeToFit();
-
-    const vstack = NSStackView.alloc().initWithFrame({
-      origin: { x: 0, y: 0 },
-      size: { width: 500, height: 500 },
-    });
-
-    vstack.orientation = NSUserInterfaceLayoutOrientation.Vertical;
-    vstack.alignment = NSLayoutAttribute.CenterX;
-    vstack.distribution = NSStackViewDistribution.Fill;
-    vstack.spacing = 40;
-    vstack.translatesAutoresizingMaskIntoConstraints = false;
-
-    const image = NSImage.alloc().initWithContentsOfFile(
-      new URL("../assets/NativeScript.png", import.meta.url).pathname,
-    );
-
-    image.size = { width: 128, height: 128 };
-
-    const imageView = NSImageView.imageViewWithImage(image);
-
-    vstack.addViewInGravity(imageView, NSStackViewGravity.Center);
-    vstack.addViewInGravity(label, NSStackViewGravity.Center);
-
-    this.contentView.addSubview(vstack);
-
-    vstack.centerXAnchor.constraintEqualToAnchor(
-      this.contentView.centerXAnchor,
-    ).isActive = true;
-    vstack.centerYAnchor.constraintEqualToAnchor(
-      this.contentView.centerYAnchor,
-    ).isActive = true;
-
-    return this;
-  }
-
-  windowWillClose(_notification: NSNotification) {
-    NSApp.terminate(this);
+    NSApp.activateIgnoringOtherApps(false);
   }
 }
 
@@ -128,45 +48,6 @@ const NSApp = NSApplication.sharedApplication;
 NSApp.setActivationPolicy(NSApplicationActivationPolicy.Regular);
 
 // Class is lazily initialized when first used
-const delegate = ApplicationDelegate.new();
-
-// Add a method to the delegate class after it has been registered with the runtime,
-// dynamically.
-interop.addMethod(
-  ApplicationDelegate,
-  function applicationDidFinishLaunching(_notification) {
-    this.window = Window.new();
-
-    NSApp.activateIgnoringOtherApps(false);
-
-    NSApp.stop(this);
-
-    const loop = () => {
-      const event = NSApp.nextEventMatchingMaskUntilDateInModeDequeue(
-        NSEventMask.Any,
-        null,
-        "kCFRunLoopDefaultMode",
-        true,
-      );
-
-      if (event != null) {
-        NSApp.sendEvent(event);
-      }
-
-      if (this.running) {
-        setTimeout(loop, 10);
-        // queueMicrotask(loop);
-      }
-    };
-
-    setTimeout(loop, 0);
-
-    setTimeout(() => {
-      console.log("[setTimeout] after 2 seconds");
-    }, 2000);
-  },
-);
-
-NSApp.delegate = delegate;
+NSApp.delegate = ApplicationDelegate.new();
 
 NSApp.run();
