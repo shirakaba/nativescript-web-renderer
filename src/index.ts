@@ -1,12 +1,10 @@
-/// <reference types="@nativescript/macos-node-api/types/Foundation.d.ts" />
-/// <reference types="@nativescript/macos-node-api/types/AppKit.d.ts" />
-import "@nativescript/objc-node-api";
+import "@nativescript/macos-node-api";
 
 export class ApplicationDelegate
   extends NSObject
-  implements NSApplicationDelegate
+  implements NSApplicationDelegate, NSWindowDelegate
 {
-  static ObjCProtocols = [NSApplicationDelegate];
+  static ObjCProtocols = [NSApplicationDelegate, NSWindowDelegate];
 
   static {
     NativeClass(this);
@@ -24,18 +22,7 @@ export class ApplicationDelegate
 
     appMenu.addItemWithTitleActionKeyEquivalent("Quit", "terminate:", "q");
 
-    const controller = NSViewController.new();
-    const hostView = controller.view;
-    const textView = NSTextView.alloc().initWithFrame(NSZeroRect);
-    textView.translatesAutoresizingMaskIntoConstraints = false;
-    hostView.addSubview(textView as unknown as NSView);
-
-    NSLayoutConstraint.activateConstraints([
-      textView.leadingAnchor.constraintEqualToAnchor(hostView.leadingAnchor),
-      textView.trailingAnchor.constraintEqualToAnchor(hostView.trailingAnchor),
-      textView.topAnchor.constraintEqualToAnchor(hostView.topAnchor),
-      textView.bottomAnchor.constraintEqualToAnchor(hostView.bottomAnchor),
-    ]);
+    const controller = ViewController.new();
     const window = NSWindow.windowWithContentViewController(controller);
 
     window.title = "NativeScript for macOS";
@@ -44,23 +31,66 @@ export class ApplicationDelegate
       NSWindowStyleMask.Titled |
       NSWindowStyleMask.Closable |
       NSWindowStyleMask.Miniaturizable |
-      NSWindowStyleMask.Resizable |
-      NSWindowStyleMask.FullSizeContentView;
-
-    window.titlebarAppearsTransparent = true;
-    window.titleVisibility = NSWindowTitleVisibility.Hidden;
+      NSWindowStyleMask.Resizable;
 
     window.makeKeyAndOrderFront(this);
 
     NSApp.activateIgnoringOtherApps(false);
   }
+
+  windowWillClose(_notification: NSNotification) {
+    NSApp.terminate(this);
+  }
+}
+
+export class ViewController extends NSViewController {
+  static ObjCExposedMethods = {
+    buttonClicked: {
+      params: [NSView],
+      returns: interop.types.void,
+    },
+  };
+
+  static {
+    NativeClass(this);
+  }
+
+  i = 0;
+  button: NSButton | null = null;
+
+  loadView() {
+    this.view = NSView.new();
+  }
+
+  viewDidLoad() {
+    super.viewDidLoad();
+
+    this.view.frame = {
+      origin: { x: 0, y: 0 },
+      size: { width: 500, height: 500 },
+    };
+
+    const textView = NSTextView.new();
+
+    textView.string = "This is a NSTextView.\nYou can edit this text.";
+    textView.font = NSFont.systemFontOfSize(16);
+    textView.editable = true;
+
+    textView.translatesAutoresizingMaskIntoConstraints = false;
+    textView.frame = this.view.bounds;
+    textView.autoresizingMask =
+      NSAutoresizingMaskOptions.WidthSizable |
+      NSAutoresizingMaskOptions.HeightSizable;
+
+    // @ts-expect-error NSTextView type inconsistency for now
+    this.view.addSubview(textView);
+  }
 }
 
 const NSApp = NSApplication.sharedApplication;
 
-NSApp.setActivationPolicy(NSApplicationActivationPolicy.Regular);
-
-// Class is lazily initialized when first used
 NSApp.delegate = ApplicationDelegate.new();
 
-NSApp.run();
+NSApp.setActivationPolicy(NSApplicationActivationPolicy.Regular);
+
+NSApplicationMain(0, null);
