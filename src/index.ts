@@ -1,4 +1,6 @@
-import "@nativescript/macos-node-api";
+/// <reference types="@nativescript/macos-node-api/types/Foundation.d.ts" />
+/// <reference types="@nativescript/macos-node-api/types/AppKit.d.ts" />
+import "@nativescript/objc-node-api";
 
 export class ApplicationDelegate
   extends NSObject
